@@ -41,33 +41,63 @@
   - Props-driven, minimal internal state
   - Can only import other UI components
 
-### State Management
-1. **Default**: Internal component state (`let` in Svelte)
+### State Management (Svelte 5 Runes)
+
+**Reactive State:**
+- Use `$state()` for reactive local state
+- Use `$derived()` for computed/derived values
+- Use `$effect()` for side effects
+
+**Props:**
+- Use `$props()` with TypeScript interface for component props
+- Use `$bindable()` for two-way binding
+- Example:
+  ```typescript
+  interface Props {
+    value: string
+    count?: number
+    onUpdate: (value: string) => void
+  }
+
+  let { value = $bindable(), count = 0, onUpdate }: Props = $props()
+  ```
+
+**State Patterns:**
+1. **Default**: Component-local state with `$state()`
 2. **Stores**: Only when necessary
    - Props drilling > 2 levels
    - Cross-component state sharing needed
+   - Use Svelte 5 `$state()` in `.svelte.ts` files for shared state
 
 ### Imports
 - Use path aliases:
-  - `@/app/*` for frontend components
-  - `@/core/*` for services and models
-  - `@/infrastructure/*` for adapters
-  - `@cook/shared` for shared utilities
+  - `$presentation/*` for UI components and pages
+  - `$core/*` for services and models
+  - `$infrastructure/*` for adapters
+  - `$shared/*` for shared utilities
 
 ## File Organization
 
 ### Directory Structure
 ```
 apps/web/src/
-├── app/          # Frontend (UI components, pages)
-├── core/         # Services & models (business logic)
-├── infrastructure/  # Adapters (GitHub, Firebase, etc.)
+├── presentation/     # Frontend (UI components, pages)
+│   ├── components/   # Reusable components
+│   └── styles/       # Global CSS and design tokens
+├── core/            # Services & models (business logic)
+├── infrastructure/  # Adapters (Firebase, etc.)
+└── routes/          # SvelteKit routes
 ```
 
 ### Dependency Rules
-- `app/` imports from `core/` only, never from `infrastructure/`
+- `presentation/` imports from `core/` only, never from `infrastructure/`
 - `core/` defines interfaces, `infrastructure/` implements them
 - No circular dependencies
+
+### Design Tokens
+- Use CSS custom properties defined in `presentation/styles/tokens.css`
+- Never use magic values (colors, spacing, etc.) directly in components
+- Always use `var(--token-name)` for consistent design system
 
 ## TypeScript Specific
 

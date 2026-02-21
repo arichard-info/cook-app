@@ -65,6 +65,29 @@ export class FirebaseGeminiAdapter implements ILLMService {
   }
 
   /**
+   * Stream a response
+   * @param messages - Conversation history
+   * @param onChunk - Callback for each chunk
+   */
+  async streamMessage(messages: Message[], onChunk: (chunk: string) => void): Promise<void> {
+    const chat = this.model.startChat({
+      history: this.convertMessagesToHistory(messages.slice(0, -1)),
+      generationConfig: {
+        maxOutputTokens: 2000,
+        temperature: 0.7,
+      },
+    });
+
+    const lastMessage = messages[messages.length - 1];
+    const result = await chat.sendMessageStream(lastMessage.content);
+
+    for await (const chunk of result.stream) {
+      const text = chunk.text();
+      onChunk(text);
+    }
+  }
+
+  /**
    * Convert our Message format to Gemini history format
    */
   private convertMessagesToHistory(messages: Message[]) {

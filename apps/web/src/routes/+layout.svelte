@@ -1,12 +1,5 @@
 <script lang="ts">
+  import '$presentation/styles/global.css'
 </script>
 
 <slot />
-
-<style>
-  :global(body) {
-    margin: 0;
-    padding: 0;
-    font-family: 'Roboto', system-ui, -apple-system, sans-serif;
-  }
-</style>
