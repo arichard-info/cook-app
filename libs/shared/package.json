@@ -1,0 +1,12 @@
+{
+  "name": "@cook/shared",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./markdown": "./markdown.ts",
+    "./diff": "./diff.ts",
+    "./date": "./date.ts"
+  }
+}
