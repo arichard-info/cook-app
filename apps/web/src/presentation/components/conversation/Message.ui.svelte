@@ -1,26 +1,62 @@
 <script lang="ts">
   import { marked } from 'marked'
+  import type { Recipe } from '$core/models/Recipe'
+  import type { MessageContent } from '$core/services/LLMService'
+  import RecipeCard from '$presentation/components/recipe/RecipeCard.ui.svelte'
 
   interface Props {
     role: 'user' | 'assistant'
-    content: string
+    contents: MessageContent[]
     isStreaming?: boolean
   }
 
-  let { role, content, isStreaming = false }: Props = $props()
+  let { role, contents, isStreaming = false }: Props = $props()
 
   const renderMarkdown = (text: string): string => {
     return marked.parse(text, { async: false, breaks: true }) as string
   }
+
+  const parseRecipe = (recipeJson: string): Recipe | null => {
+    try {
+      return JSON.parse(recipeJson) as Recipe
+    } catch {
+      return null
+    }
+  }
+
+  const handleSaveRecipe = () => {
+    // TODO: Implement recipe save
+    console.log('Save recipe')
+  }
+
+  const handleModifyRecipe = () => {
+    // TODO: Implement recipe modification
+    console.log('Modify recipe')
+  }
 </script>
 
 <div class="message message-{role}" class:streaming={isStreaming}>
-  <div class="message-content">
-    {#if role === 'assistant'}
-      {@html renderMarkdown(content)}
-    {:else}
-      {content}
-    {/if}
+  <div class="message-contents">
+    {#each contents as content}
+      {#if content.type === 'text'}
+        <div class="message-content">
+          {#if role === 'assistant'}
+            {@html renderMarkdown(content.content)}
+          {:else}
+            {content.content}
+          {/if}
+        </div>
+      {:else if content.type === 'recipe'}
+        {@const recipe = parseRecipe(content.content)}
+        {#if recipe}
+          <RecipeCard
+            {recipe}
+            onSave={handleSaveRecipe}
+            onModify={handleModifyRecipe}
+          />
+        {/if}
+      {/if}
+    {/each}
   </div>
 </div>
 
@@ -90,5 +126,9 @@
 
   .message.streaming .message-content {
     opacity: var(--opacity-streaming);
+  }
+
+  .message-contents {
+    width: 100%;
   }
 </style>

@@ -1,6 +1,13 @@
+export type MessageContentType = 'text' | 'recipe'
+
+export interface MessageContent {
+  type: MessageContentType
+  content: string
+}
+
 export interface Message {
   role: 'user' | 'assistant'
-  content: string
+  contents: MessageContent[]
   timestamp: Date
 }
 

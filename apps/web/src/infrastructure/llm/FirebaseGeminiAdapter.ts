@@ -1,6 +1,6 @@
 import { initializeApp, type FirebaseApp } from "firebase/app";
 import { getAI, getGenerativeModel } from "firebase/ai";
-import type { ILLMService, Message } from "@/core/services/LLMService";
+import type { ILLMService, Message } from "$core/services/LLMService";
 
 const SYSTEM_PROMPT = `Tu es un assistant culinaire expert qui aide les utilisateurs à créer et affiner des recettes.
 
@@ -8,17 +8,41 @@ Ton rôle :
 - Discuter avec l'utilisateur pour comprendre ses envies, contraintes et idées
 - Poser des questions pertinentes pour affiner le concept
 - Suggérer des variantes, techniques ou ingrédients
-- Quand l'idée est mature, proposer de formaliser la recette
+- Quand l'idée est mature OU que l'utilisateur demande explicitement, proposer de générer la recette formalisée
 
 Ton ton :
 - Friendly et conversationnel
 - Expertise culinaire sans être pédant
 - Encourageant et créatif
 
-Format de recette (quand tu formalises) :
-- Markdown avec frontmatter YAML
-- Sections : Ingrédients (avec groupes si pertinent), Étapes, Notes & Tips
-- Métadonnées : title, servings, tags`;
+IMPORTANT - Génération de recette :
+Quand tu génères une recette formalisée, tu DOIS utiliser ce format JSON exact enveloppé dans des marqueurs spéciaux :
+
+<<<RECIPE_START>>>
+{
+  "metadata": {
+    "title": "Nom de la recette",
+    "servings": 4,
+    "tags": ["tag1", "tag2"],
+    "prepTime": "15 min",
+    "cookTime": "30 min"
+  },
+  "ingredients": [
+    {
+      "name": "Groupe optionnel",
+      "items": ["200g de farine", "3 œufs"]
+    }
+  ],
+  "steps": [
+    "Étape 1 détaillée",
+    "Étape 2 détaillée"
+  ],
+  "notes": ["Note ou tip optionnel"]
+}
+<<<RECIPE_END>>>
+
+Après avoir généré une recette, invite TOUJOURS l'utilisateur à soit l'enregistrer, soit la modifier en posant une question.`;
+
 
 interface FirebaseConfig {
   apiKey: string;
@@ -60,7 +84,11 @@ export class FirebaseGeminiAdapter implements ILLMService {
     });
 
     const lastMessage = messages[messages.length - 1];
-    const result = await chat.sendMessage(lastMessage.content);
+    const lastMessageText = lastMessage.contents
+      .map(c => c.type === 'text' ? c.content : '')
+      .filter(Boolean)
+      .join('\n\n');
+    const result = await chat.sendMessage(lastMessageText);
     return result.response.text();
   }
 
@@ -79,7 +107,11 @@ export class FirebaseGeminiAdapter implements ILLMService {
     });
 
     const lastMessage = messages[messages.length - 1];
-    const result = await chat.sendMessageStream(lastMessage.content);
+    const lastMessageText = lastMessage.contents
+      .map(c => c.type === 'text' ? c.content : '')
+      .filter(Boolean)
+      .join('\n\n');
+    const result = await chat.sendMessageStream(lastMessageText);
 
     for await (const chunk of result.stream) {
       const text = chunk.text();
@@ -91,9 +123,17 @@ export class FirebaseGeminiAdapter implements ILLMService {
    * Convert our Message format to Gemini history format
    */
   private convertMessagesToHistory(messages: Message[]) {
-    return messages.map((msg) => ({
-      role: (msg.role === "assistant" ? "model" : "user") as "model" | "user",
-      parts: [{ text: msg.content }],
-    }));
+    return messages.map((msg) => {
+      // Combine all text contents for history
+      const textContent = msg.contents
+        .map(c => c.type === 'text' ? c.content : '')
+        .filter(Boolean)
+        .join('\n\n')
+
+      return {
+        role: (msg.role === "assistant" ? "model" : "user") as "model" | "user",
+        parts: [{ text: textContent }],
+      }
+    });
   }
 }

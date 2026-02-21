@@ -1,22 +1,38 @@
 <script lang="ts">
-  import type { Message } from '$core/services/LLMService'
+  import type { Message, MessageContent } from '$core/services/LLMService'
   import { getLLMService } from '$infrastructure/config'
+  import { parseMessageContents } from '$core/utils/recipeParser'
   import MessageComponent from './Message.ui.svelte'
   import MessageInput from './MessageInput.ui.svelte'
+  import RecipeLoader from '$presentation/components/recipe/RecipeLoader.ui.svelte'
 
   let messages = $state<Message[]>([])
   let inputValue = $state('')
   let isLoading = $state(false)
   let streamingContent = $state('')
+  let isGeneratingRecipe = $state(false)
+  let textBeforeRecipe = $state('')
+  let textAfterRecipe = $state('')
 
   const llmService = getLLMService()
+
+  const streamingContents = $derived<MessageContent[]>(
+    !streamingContent
+      ? []
+      : !isGeneratingRecipe
+      ? [{ type: 'text', content: streamingContent }]
+      : [
+          textBeforeRecipe ? { type: 'text', content: textBeforeRecipe } : null,
+          textAfterRecipe ? { type: 'text', content: textAfterRecipe } : null
+        ].filter((c): c is MessageContent => c !== null)
+  )
 
   const sendMessage = async () => {
     if (!inputValue.trim() || !llmService || isLoading) return
 
     const userMessage: Message = {
       role: 'user',
-      content: inputValue.trim(),
+      contents: [{ type: 'text', content: inputValue.trim() }],
       timestamp: new Date()
     }
 
@@ -28,16 +44,32 @@
     try {
       await llmService.streamMessage(messages, (chunk: string) => {
         streamingContent += chunk
+
+        if (streamingContent.includes('<<<RECIPE_START>>>')) {
+          isGeneratingRecipe = true
+          const startIndex = streamingContent.indexOf('<<<RECIPE_START>>>')
+          textBeforeRecipe = streamingContent.substring(0, startIndex).trim()
+
+          // If we also have the end marker, extract text after
+          if (streamingContent.includes('<<<RECIPE_END>>>')) {
+            const endIndex = streamingContent.indexOf('<<<RECIPE_END>>>') + '<<<RECIPE_END>>>'.length
+            textAfterRecipe = streamingContent.substring(endIndex).trim()
+          }
+        }
       })
+
+      isGeneratingRecipe = false
 
       const assistantMessage: Message = {
         role: 'assistant',
-        content: streamingContent,
+        contents: parseMessageContents(streamingContent),
         timestamp: new Date()
       }
 
       messages = [...messages, assistantMessage]
       streamingContent = ''
+      textBeforeRecipe = ''
+      textAfterRecipe = ''
     } catch (error) {
       console.error('Error sending message:', error)
     } finally {
@@ -59,11 +91,21 @@
       </div>
     {:else}
       {#each messages as message}
-        <MessageComponent role={message.role} content={message.content} />
+        <MessageComponent
+          role={message.role}
+          contents={message.contents}
+        />
       {/each}
 
-      {#if streamingContent}
-        <MessageComponent role="assistant" content={streamingContent} isStreaming={true} />
+      {#if isGeneratingRecipe}
+        {#each streamingContents as content}
+          {#if content.type === 'text'}
+            <MessageComponent role="assistant" contents={[content]} isStreaming={true} />
+          {/if}
+        {/each}
+        <RecipeLoader />
+      {:else if streamingContent}
+        <MessageComponent role="assistant" contents={streamingContents} isStreaming={true} />
       {/if}
     {/if}
   </div>
