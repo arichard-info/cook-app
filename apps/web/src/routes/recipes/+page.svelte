@@ -49,11 +49,6 @@
 </script>
 
 <div class="recipes-page">
-  <header class="page-header">
-    <h1>Mes recettes</h1>
-    <a href="/new-recipe" class="new-recipe-btn">+ Nouvelle</a>
-  </header>
-
   {#if isLoading}
     <p class="status-message">Chargement...</p>
   {:else if !isAuthenticated}

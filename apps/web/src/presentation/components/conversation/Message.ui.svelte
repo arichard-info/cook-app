@@ -4,14 +4,17 @@
   import type { MessageContent } from '$core/services/LLMService'
   import RecipeCard from '$presentation/components/recipe/RecipeCard.ui.svelte'
 
+  interface SaveStateEntry { status: 'saving' | 'saved' | 'error'; id?: string }
+
   interface Props {
     role: 'user' | 'assistant'
     contents: MessageContent[]
     isStreaming?: boolean
-    onSaveRecipe?: (recipe: Recipe) => void
+    onSaveRecipe?: (recipe: Recipe, key: string) => void
+    recipeStates?: Record<string, SaveStateEntry>
   }
 
-  let { role, contents, isStreaming = false, onSaveRecipe }: Props = $props()
+  let { role, contents, isStreaming = false, onSaveRecipe, recipeStates = {} }: Props = $props()
 
   const renderMarkdown = (text: string): string => {
     return marked.parse(text, { async: false, breaks: true }) as string
@@ -39,10 +42,13 @@
         </div>
       {:else if content.type === 'recipe'}
         {@const recipe = parseRecipe(content.content)}
+        {@const state = recipeStates[content.content]}
         {#if recipe}
           <RecipeCard
             {recipe}
-            onSave={() => onSaveRecipe?.(recipe)}
+            onSave={() => onSaveRecipe?.(recipe, content.content)}
+            saveState={state?.status ?? 'idle'}
+            savedId={state?.id}
           />
         {/if}
       {/if}

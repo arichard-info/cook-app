@@ -7,17 +7,18 @@ import { encodeBase64, decodeBase64 } from '$shared/base64'
 import { slugify } from '$shared/string'
 
 const API_BASE = 'https://api.github.com'
-const REPO_NAME = 'cook-data'
 
 /**
  * GitHub storage adapter — stores recipes as markdown files in a private GitHub repo
- * Repo structure: {username}/cook-data/recipes/{slug}.md
+ * Repo structure: {username}/{repoName}/recipes/{slug}.md
  */
 export class GitHubStorageAdapter implements IRecipeService {
   private readonly token: string
+  private readonly repoName: string
 
-  constructor(token: string) {
+  constructor(token: string, repoName: string) {
     this.token = token
+    this.repoName = repoName
   }
 
   /**
@@ -42,7 +43,7 @@ export class GitHubStorageAdapter implements IRecipeService {
     const content = formatRecipeToMarkdown(savedRecipe)
     const encoded = encodeBase64(content)
     const path = `recipes/${id}.md`
-    const url = `${API_BASE}/repos/${username}/${REPO_NAME}/contents/${path}`
+    const url = `${API_BASE}/repos/${username}/${this.repoName}/contents/${path}`
 
     // Check for existing file to get SHA (required for updates)
     let sha: string | undefined
@@ -84,7 +85,7 @@ export class GitHubStorageAdapter implements IRecipeService {
    */
   async list(username: string): Promise<SavedRecipe[]> {
     const response = await fetch(
-      `${API_BASE}/repos/${username}/${REPO_NAME}/contents/recipes`,
+      `${API_BASE}/repos/${username}/${this.repoName}/contents/recipes`,
       { headers: this.headers() },
     )
 
@@ -110,7 +111,7 @@ export class GitHubStorageAdapter implements IRecipeService {
    */
   async get(slug: string, username: string): Promise<SavedRecipe | null> {
     const response = await fetch(
-      `${API_BASE}/repos/${username}/${REPO_NAME}/contents/recipes/${slug}.md`,
+      `${API_BASE}/repos/${username}/${this.repoName}/contents/recipes/${slug}.md`,
       { headers: this.headers() },
     )
 
@@ -127,7 +128,7 @@ export class GitHubStorageAdapter implements IRecipeService {
    * @param username - GitHub username
    */
   async delete(slug: string, username: string): Promise<void> {
-    const url = `${API_BASE}/repos/${username}/${REPO_NAME}/contents/recipes/${slug}.md`
+    const url = `${API_BASE}/repos/${username}/${this.repoName}/contents/recipes/${slug}.md`
     const getResponse = await fetch(url, { headers: this.headers() })
     if (!getResponse.ok) return
 
@@ -160,7 +161,7 @@ export class GitHubStorageAdapter implements IRecipeService {
       method: 'POST',
       headers: this.headers(),
       body: JSON.stringify({
-        name: REPO_NAME,
+        name: this.repoName,
         private: true,
         description: 'Cook — recipe journal data',
         auto_init: true,

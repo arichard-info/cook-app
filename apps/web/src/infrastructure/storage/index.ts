@@ -14,5 +14,5 @@ export const getRecipeService = (): IRecipeService | null => {
   const user = getAuthService()?.getUser()
   if (!user) return null
 
-  return new GitHubStorageAdapter(user.token)
+  return new GitHubStorageAdapter(user.token, user.repoName)
 }

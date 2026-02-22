@@ -2,6 +2,7 @@
 export interface AuthUser {
   username: string
   token: string
+  repoName: string
 }
 
 /**
@@ -25,8 +26,9 @@ export interface IAuthService {
    * Validate a GitHub Personal Access Token, encrypt it, and store it.
    * Fetches the GitHub username from the API to validate the token.
    * @param pat - GitHub Personal Access Token
+   * @param repoName - GitHub repository name to use for storage
    */
-  setToken(pat: string): Promise<void>
+  setToken(pat: string, repoName: string): Promise<void>
 
   /**
    * Clear stored credentials and sign out

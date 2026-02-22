@@ -2,6 +2,7 @@ import type { IAuthService, AuthUser } from '$core/services/AuthService'
 
 const TOKEN_KEY = 'cook_github_token'
 const USER_KEY = 'cook_github_user'
+const REPO_KEY = 'cook_github_repo'
 const ENC_KEY_KEY = 'cook_enc_key'
 const GITHUB_USER_URL = 'https://api.github.com/user'
 
@@ -64,11 +65,12 @@ export class GitHubPATAdapter implements IAuthService {
   async initialize(): Promise<void> {
     const encrypted = localStorage.getItem(TOKEN_KEY)
     const username = localStorage.getItem(USER_KEY)
-    if (!encrypted || !username) return
+    const repoName = localStorage.getItem(REPO_KEY)
+    if (!encrypted || !username || !repoName) return
 
     try {
       const token = await decryptToken(encrypted)
-      this.user = { token, username }
+      this.user = { token, username, repoName }
     } catch {
       // Corrupted data — clear it
       this.signOut()
@@ -85,9 +87,10 @@ export class GitHubPATAdapter implements IAuthService {
   /**
    * Validate a PAT by calling the GitHub API, then encrypt and store it
    * @param pat - GitHub Personal Access Token
+   * @param repoName - GitHub repository name to use for storage
    * @throws Error if the token is invalid
    */
-  async setToken(pat: string): Promise<void> {
+  async setToken(pat: string, repoName: string): Promise<void> {
     const response = await fetch(GITHUB_USER_URL, {
       headers: {
         Authorization: `Bearer ${pat}`,
@@ -105,8 +108,9 @@ export class GitHubPATAdapter implements IAuthService {
     const encrypted = await encryptToken(pat)
     localStorage.setItem(TOKEN_KEY, encrypted)
     localStorage.setItem(USER_KEY, username)
+    localStorage.setItem(REPO_KEY, repoName)
 
-    this.user = { token: pat, username }
+    this.user = { token: pat, username, repoName }
   }
 
   /**
@@ -115,6 +119,7 @@ export class GitHubPATAdapter implements IAuthService {
   signOut(): void {
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USER_KEY)
+    localStorage.removeItem(REPO_KEY)
     localStorage.removeItem(ENC_KEY_KEY)
     this.user = null
   }

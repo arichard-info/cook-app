@@ -5,9 +5,11 @@
     recipe: Recipe
     onSave?: () => void
     onModify?: () => void
+    saveState?: 'idle' | 'saving' | 'saved' | 'error'
+    savedId?: string
   }
 
-  let { recipe, onSave, onModify }: Props = $props()
+  let { recipe, onSave, onModify, saveState = 'idle', savedId }: Props = $props()
 </script>
 
 <div class="recipe-card">
@@ -64,9 +66,27 @@
 
   <footer class="recipe-actions">
     {#if onSave}
-      <button class="action-button primary" onclick={onSave}>
-        Enregistrer la recette
-      </button>
+      {#if saveState === 'saved' && savedId}
+        <button class="action-button primary saved" disabled>
+          ✓ Enregistrée
+        </button>
+        <a href="/recipes/{savedId}" class="action-button secondary">
+          Voir la recette →
+        </a>
+      {:else}
+        <button
+          class="action-button primary"
+          class:saving={saveState === 'saving'}
+          onclick={onSave}
+          disabled={saveState === 'saving'}
+        >
+          {#if saveState === 'saving'}
+            <span class="spinner"></span>
+          {:else}
+            Enregistrer la recette
+          {/if}
+        </button>
+      {/if}
     {/if}
     {#if onModify}
       <button class="action-button secondary" onclick={onModify}>
@@ -223,5 +243,32 @@
 
   .action-button.secondary:hover {
     background: var(--color-bg-secondary);
+  }
+
+  .action-button.saved {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  .action-button:disabled {
+    cursor: not-allowed;
+  }
+
+  .action-button.saving {
+    opacity: var(--opacity-loading);
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 </style>

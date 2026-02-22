@@ -1,21 +1,22 @@
 <script lang="ts">
   interface Props {
-    onSubmit: (token: string) => Promise<void>
+    onSubmit: (token: string, repoName: string) => Promise<void>
     onDismiss: () => void
   }
 
   let { onSubmit, onDismiss }: Props = $props()
 
   let token = $state('')
+  let repoName = $state('cook-data')
   let isLoading = $state(false)
   let error = $state<string | null>(null)
 
   const handleSubmit = async () => {
-    if (!token.trim()) return
+    if (!token.trim() || !repoName.trim()) return
     isLoading = true
     error = null
     try {
-      await onSubmit(token.trim())
+      await onSubmit(token.trim(), repoName.trim())
     } catch (e) {
       error = e instanceof Error ? e.message : 'Erreur inconnue.'
     } finally {
@@ -34,7 +35,7 @@
 
     <p class="instructions">
       Génère un <strong>Fine-grained Personal Access Token</strong> sur GitHub avec accès
-      <strong>Contents</strong> (read & write) sur le repo <code>cook-data</code>.
+      <strong>Contents</strong> (read & write) sur le repo de stockage.
     </p>
 
     <a
@@ -60,6 +61,20 @@
       />
     </div>
 
+    <div class="input-group">
+      <label for="repo-input">Repo de stockage</label>
+      <input
+        id="repo-input"
+        type="text"
+        bind:value={repoName}
+        onkeydown={handleKeydown}
+        placeholder="cook-data"
+        disabled={isLoading}
+        autocomplete="off"
+        spellcheck={false}
+      />
+    </div>
+
     {#if error}
       <p class="error-message">{error}</p>
     {/if}
@@ -69,7 +84,7 @@
     </p>
 
     <div class="modal-actions">
-      <button class="btn-primary" onclick={handleSubmit} disabled={isLoading || !token.trim()}>
+      <button class="btn-primary" onclick={handleSubmit} disabled={isLoading || !token.trim() || !repoName.trim()}>
         {isLoading ? 'Vérification...' : 'Connecter'}
       </button>
       <button class="btn-secondary" onclick={onDismiss} disabled={isLoading}>Annuler</button>
