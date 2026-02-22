@@ -27,10 +27,13 @@ export class FirebaseGeminiAdapter implements ILLMService {
    * @param systemPrompt - System prompt defining the conversation behavior
    * @returns Assistant response
    */
-  async sendMessage(messages: Message[], systemPrompt: string): Promise<string> {
+  async sendMessage(
+    messages: Message[],
+    systemPrompt: string,
+  ): Promise<string> {
     const ai = getAI(this.firebaseApp);
     const model = getGenerativeModel(ai, {
-      model: "gemini-2.0-flash-preview",
+      model: "gemini-3-flash-preview",
       systemInstruction: systemPrompt,
     });
 
@@ -64,7 +67,7 @@ export class FirebaseGeminiAdapter implements ILLMService {
   ): Promise<void> {
     const ai = getAI(this.firebaseApp);
     const model = getGenerativeModel(ai, {
-      model: "gemini-2.0-flash-preview",
+      model: "gemini-3-flash-preview",
       systemInstruction: systemPrompt,
     });
 

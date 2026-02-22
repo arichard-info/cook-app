@@ -8,9 +8,10 @@
     role: 'user' | 'assistant'
     contents: MessageContent[]
     isStreaming?: boolean
+    onSaveRecipe?: (recipe: Recipe) => void
   }
 
-  let { role, contents, isStreaming = false }: Props = $props()
+  let { role, contents, isStreaming = false, onSaveRecipe }: Props = $props()
 
   const renderMarkdown = (text: string): string => {
     return marked.parse(text, { async: false, breaks: true }) as string
@@ -22,16 +23,6 @@
     } catch {
       return null
     }
-  }
-
-  const handleSaveRecipe = () => {
-    // TODO: Implement recipe save
-    console.log('Save recipe')
-  }
-
-  const handleModifyRecipe = () => {
-    // TODO: Implement recipe modification
-    console.log('Modify recipe')
   }
 </script>
 
@@ -51,8 +42,7 @@
         {#if recipe}
           <RecipeCard
             {recipe}
-            onSave={handleSaveRecipe}
-            onModify={handleModifyRecipe}
+            onSave={() => onSaveRecipe?.(recipe)}
           />
         {/if}
       {/if}

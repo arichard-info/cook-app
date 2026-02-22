@@ -1,11 +1,13 @@
 <script lang="ts">
   import type { Message, MessageContent } from '$core/services/LLMService'
+  import type { Recipe } from '$core/models/Recipe'
   import { getLLMService } from '$infrastructure/config'
   import { parseMessageContents } from '$core/utils/recipeParser'
   import { getNewChatPrompt } from '$core/prompts/newChat'
   import MessageComponent from './Message.ui.svelte'
   import MessageInput from './MessageInput.ui.svelte'
   import RecipeLoader from '$presentation/components/recipe/RecipeLoader.ui.svelte'
+  import SaveRecipeFlow from '$presentation/components/recipe/SaveRecipeFlow.controller.svelte'
 
   let messages = $state<Message[]>([])
   let inputValue = $state('')
@@ -14,6 +16,7 @@
   let isGeneratingRecipe = $state(false)
   let textBeforeRecipe = $state('')
   let textAfterRecipe = $state('')
+  let pendingRecipeToSave = $state<Recipe | null>(null)
 
   const llmService = getLLMService()
 
@@ -95,6 +98,7 @@
         <MessageComponent
           role={message.role}
           contents={message.contents}
+          onSaveRecipe={(recipe) => { pendingRecipeToSave = recipe }}
         />
       {/each}
 
@@ -118,6 +122,14 @@
     onInput={handleInput}
   />
 </div>
+
+{#if pendingRecipeToSave}
+  <SaveRecipeFlow
+    recipe={pendingRecipeToSave}
+    onSaved={() => { pendingRecipeToSave = null }}
+    onDismiss={() => { pendingRecipeToSave = null }}
+  />
+{/if}
 
 <style>
   .chat-container {
