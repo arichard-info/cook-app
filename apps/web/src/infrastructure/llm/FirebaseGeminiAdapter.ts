@@ -16,24 +16,25 @@ interface FirebaseConfig {
  */
 export class FirebaseGeminiAdapter implements ILLMService {
   private firebaseApp: FirebaseApp;
-  private model;
 
   constructor(firebaseConfig: FirebaseConfig) {
     this.firebaseApp = initializeApp(firebaseConfig);
-    const ai = getAI(this.firebaseApp);
-    this.model = getGenerativeModel(ai, {
-      model: "gemini-3-flash-preview",
-      systemInstruction: getNewChatPrompt(),
-    });
   }
 
   /**
    * Send a message and get a response
    * @param messages - Conversation history
+   * @param systemPrompt - System prompt defining the conversation behavior
    * @returns Assistant response
    */
-  async sendMessage(messages: Message[]): Promise<string> {
-    const chat = this.model.startChat({
+  async sendMessage(messages: Message[], systemPrompt: string): Promise<string> {
+    const ai = getAI(this.firebaseApp);
+    const model = getGenerativeModel(ai, {
+      model: "gemini-2.0-flash-preview",
+      systemInstruction: systemPrompt,
+    });
+
+    const chat = model.startChat({
       history: this.convertMessagesToHistory(messages.slice(0, -1)),
       generationConfig: {
         maxOutputTokens: 2000,
@@ -54,12 +55,20 @@ export class FirebaseGeminiAdapter implements ILLMService {
    * Stream a response
    * @param messages - Conversation history
    * @param onChunk - Callback for each chunk
+   * @param systemPrompt - System prompt defining the conversation behavior
    */
   async streamMessage(
     messages: Message[],
     onChunk: (chunk: string) => void,
+    systemPrompt: string,
   ): Promise<void> {
-    const chat = this.model.startChat({
+    const ai = getAI(this.firebaseApp);
+    const model = getGenerativeModel(ai, {
+      model: "gemini-2.0-flash-preview",
+      systemInstruction: systemPrompt,
+    });
+
+    const chat = model.startChat({
       history: this.convertMessagesToHistory(messages.slice(0, -1)),
       generationConfig: {
         maxOutputTokens: 2000,
@@ -85,7 +94,6 @@ export class FirebaseGeminiAdapter implements ILLMService {
    */
   private convertMessagesToHistory(messages: Message[]) {
     return messages.map((msg) => {
-      // Combine all text contents for history
       const textContent = msg.contents
         .map((c) => (c.type === "text" ? c.content : ""))
         .filter(Boolean)

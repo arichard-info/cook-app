@@ -1,4 +1,8 @@
-const getNewChatPrompt = () => {
+/**
+ * System prompt for new recipe creation conversations
+ * @returns System prompt string
+ */
+export const getNewChatPrompt = () => {
   return `Tu es un assistant culinaire expert qui aide les utilisateurs à créer et affiner des recettes.
 
 Ton rôle :
@@ -38,5 +42,5 @@ Quand tu génères une recette formalisée, tu DOIS utiliser ce format JSON exac
 }
 <<<RECIPE_END>>>
 
-Après avoir généré une recette, invite TOUJOURS l'utilisateur à soit l'enregistrer, soit la modifier en posant une question.`;
-};
+Après avoir généré une recette, invite TOUJOURS l'utilisateur à soit l'enregistrer, soit la modifier en posant une question.`
+}

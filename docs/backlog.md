@@ -2,42 +2,42 @@
 
 ## MVP : Session de cuisine "live"
 
-### EPIC 1 : Conversation avec LLM
+### EPIC 1 : Conversation avec LLM ✅
 **Objectif** : Permettre à l'utilisateur de discuter avec un LLM pour co-créer une idée de recette
 
 #### User Stories
 
-- **US-1.1** : En tant qu'utilisateur, je veux lancer une nouvelle session de cuisine pour commencer à discuter d'une idée de recette
+- **US-1.1** ✅ : En tant qu'utilisateur, je veux lancer une nouvelle session de cuisine pour commencer à discuter d'une idée de recette
   - Critères d'acceptation :
     - Un bouton/lien permet de démarrer une nouvelle session
     - L'interface de chat s'affiche
     - Le LLM se présente et invite à exprimer une idée
 
-- **US-1.2** : En tant qu'utilisateur, je veux envoyer des messages au LLM pour échanger sur mon idée
+- **US-1.2** ✅ : En tant qu'utilisateur, je veux envoyer des messages au LLM pour échanger sur mon idée
   - Critères d'acceptation :
     - Champ de saisie de message
     - Envoi du message (bouton ou Enter)
     - Le message s'affiche dans la conversation
     - Le LLM répond de manière contextuelle
 
-- **US-1.3** : En tant qu'utilisateur, je veux voir l'historique de la conversation pour suivre l'évolution de mon idée
+- **US-1.3** ✅ : En tant qu'utilisateur, je veux voir l'historique de la conversation pour suivre l'évolution de mon idée
   - Critères d'acceptation :
     - Les messages sont affichés chronologiquement
     - Distinction visuelle entre mes messages et ceux du LLM
     - Scroll automatique vers le dernier message
 
-### EPIC 2 : Génération de recette formatée
+### EPIC 2 : Génération de recette formatée ✅
 **Objectif** : Le LLM peut formaliser la conversation en une recette structurée
 
 #### User Stories
 
-- **US-2.1** : En tant qu'utilisateur, je veux demander au LLM de formaliser notre discussion en recette
+- **US-2.1** ✅ : En tant qu'utilisateur, je veux demander au LLM de formaliser notre discussion en recette
   - Critères d'acceptation :
     - Possibilité de demander la formalisation explicitement
     - Le LLM peut aussi proposer la formalisation quand l'idée semble mature
     - Message de confirmation avant génération
 
-- **US-2.2** : En tant qu'utilisateur, je veux visualiser la recette générée dans un format structuré
+- **US-2.2** ✅ : En tant qu'utilisateur, je veux visualiser la recette générée dans un format structuré
   - Critères d'acceptation :
     - La recette s'affiche avec : titre, ingrédients, étapes, tips
     - Format lisible et organisé
@@ -57,12 +57,14 @@
 ### EPIC 3 : Persistance des recettes
 **Objectif** : Sauvegarder et gérer les recettes générées
 
+**Note technique** : Stockage sur GitHub (repo privé `cook-data`), format markdown avec frontmatter YAML. Voir `architecture.md`.
+
 #### User Stories
 
 - **US-3.1** : En tant qu'utilisateur, je veux sauvegarder une recette générée pour la retrouver plus tard
   - Critères d'acceptation :
     - Bouton "Sauvegarder" sur une recette générée
-    - La recette est stockée (localStorage en premier lieu)
+    - La recette est commitée sur GitHub (repo `cook-data`)
     - Confirmation visuelle de la sauvegarde
     - Génération d'un ID unique pour la recette
 
@@ -159,6 +161,8 @@
 ### EPIC 7 : Threads de conversation sur recette
 **Objectif** : Pouvoir discuter avec le LLM à propos d'une recette existante
 
+**Note** : La persistance et le listing des conversations sont traités dans l'EPIC 9.
+
 #### User Stories
 
 - **US-7.1** : En tant qu'utilisateur, je veux démarrer une conversation sur une recette existante
@@ -172,12 +176,6 @@
     - Interface de chat contextuelle
     - Le LLM répond en tenant compte de la recette
     - Questions types : substitutions, techniques, timing, etc.
-
-- **US-7.3** : En tant qu'utilisateur, je veux voir toutes les conversations liées à une recette
-  - Critères d'acceptation :
-    - Liste des threads/conversations pour cette recette
-    - Possibilité de reprendre une conversation
-    - Affichage des dates et premiers messages
 
 ### EPIC 8 : Modification de recette assistée par LLM
 **Objectif** : Le LLM peut proposer des modifications à une recette existante
@@ -203,90 +201,132 @@
     - Le LLM repropose une version ajustée
     - Cycle itératif jusqu'à validation
 
+### EPIC 9 : Persistance et reprise des conversations AI
+**Objectif** : Sauvegarder les conversations AI de manière cross-device et permettre de les reprendre
+
+**Note technique** : Stockage via Firestore (déjà dans le projet pour Firebase AI Logic). Les recettes vont sur GitHub ; les threads AI ont leur place sur Firestore (données structurées, éphémères/utilitaires, sync temps réel).
+
+Structure Firestore envisagée :
+```
+users/{userId}/conversations/{conversationId}
+  - type: 'newChat' | 'recipeEdit' | ...
+  - title (généré ou saisi)
+  - recipeId (optionnel, si lié à une recette)
+  - createdAt / updatedAt
+  messages/ (subcollection)
+    - role, contents, timestamp
+```
+
+#### User Stories
+
+- **US-9.1** : En tant qu'utilisateur, je veux que ma conversation en cours soit sauvegardée automatiquement
+  - Critères d'acceptation :
+    - Chaque message est persisté en Firestore après envoi
+    - Si je ferme et rouvre l'app, je retrouve ma conversation
+    - Fonctionne sur tous mes appareils (cross-device)
+
+- **US-9.2** : En tant qu'utilisateur, je veux voir la liste de mes conversations passées pour les reprendre
+  - Critères d'acceptation :
+    - Page ou panneau listant les conversations
+    - Informations visibles : date, type, premier message ou titre
+    - Action "Reprendre" qui recharge la conversation complète
+
+- **US-9.3** : En tant qu'utilisateur, je veux reprendre une conversation là où je l'avais laissée
+  - Critères d'acceptation :
+    - L'historique complet est rechargé
+    - Je peux continuer à discuter avec le LLM comme si je n'avais pas quitté
+    - La recette éventuelle déjà générée est réaffichée
+
+- **US-9.4** : En tant qu'utilisateur, je veux voir les conversations liées à une recette depuis la fiche recette
+  - Critères d'acceptation :
+    - Section "Conversations" dans la vue recette
+    - Liste des threads liés (date, extrait du premier message)
+    - Accès direct à chaque conversation
+
 ---
 
 ## Fonctionnalités avancées (Futures)
 
-### EPIC 9 : Historique et versioning de recettes
+### EPIC 10 : Historique et versioning de recettes
 **Objectif** : Tracer l'évolution d'une recette dans le temps
 
 #### User Stories
 
-- **US-9.1** : En tant qu'utilisateur, je veux voir l'historique de toutes les modifications d'une recette
+- **US-10.1** : En tant qu'utilisateur, je veux voir l'historique de toutes les modifications d'une recette
   - Critères d'acceptation :
     - Timeline des versions
     - Affichage de la date et nature du changement
     - Comparaison entre versions (diff)
 
-- **US-9.2** : En tant qu'utilisateur, je veux revenir à une version antérieure d'une recette
+- **US-10.2** : En tant qu'utilisateur, je veux revenir à une version antérieure d'une recette
   - Critères d'acceptation :
     - Action "Restaurer cette version"
     - Confirmation avant restauration
     - Création d'une nouvelle version (pas d'écrasement)
 
-- **US-9.3** : En tant qu'utilisateur, je veux visualiser l'évolution d'une recette sous forme de changelog
+- **US-10.3** : En tant qu'utilisateur, je veux visualiser l'évolution d'une recette sous forme de changelog
   - Critères d'acceptation :
     - Vue synthétique des changements
     - Format lisible et chronologique
     - Export possible du changelog
 
-### EPIC 10 : Session de cuisine guidée
+### EPIC 11 : Session de cuisine guidée
 **Objectif** : Mode "pas à pas" pour suivre une recette pendant la cuisine
 
 #### User Stories
 
-- **US-10.1** : En tant qu'utilisateur, je veux lancer une session de cuisine pour suivre une recette
+- **US-11.1** : En tant qu'utilisateur, je veux lancer une session de cuisine pour suivre une recette
   - Critères d'acceptation :
     - Mode plein écran/focus
     - Navigation étape par étape
     - Timer intégré si nécessaire
 
-- **US-10.2** : En tant qu'utilisateur, je veux naviguer facilement entre les étapes
+- **US-11.2** : En tant qu'utilisateur, je veux naviguer facilement entre les étapes
   - Critères d'acceptation :
     - Boutons Précédent/Suivant
     - Affichage de l'étape courante en gros
     - Indicateur de progression
 
-- **US-10.3** : En tant qu'utilisateur, je veux voir les ingrédients nécessaires pour chaque étape
+- **US-11.3** : En tant qu'utilisateur, je veux voir les ingrédients nécessaires pour chaque étape
   - Critères d'acceptation :
     - Affichage contextuel des ingrédients
     - Possibilité de cocher les ingrédients utilisés
 
-### EPIC 11 : Annotations contextuelles
+### EPIC 12 : Annotations contextuelles
 **Objectif** : Pouvoir commenter des parties spécifiques d'une recette
 
 #### User Stories
 
-- **US-11.1** : En tant qu'utilisateur, je veux sélectionner un texte dans une recette pour y ajouter un commentaire
+- **US-12.1** : En tant qu'utilisateur, je veux sélectionner un texte dans une recette pour y ajouter un commentaire
   - Critères d'acceptation :
     - Sélection de texte activable
     - Action "Ajouter un commentaire"
     - Le commentaire est lié à cette portion de texte
 
-- **US-11.2** : En tant qu'utilisateur, je veux voir les commentaires directement dans le contexte de la recette
+- **US-12.2** : En tant qu'utilisateur, je veux voir les commentaires directement dans le contexte de la recette
   - Critères d'acceptation :
     - Indicateur visuel sur les portions commentées
     - Affichage au survol ou au clic
     - Possibilité d'éditer/supprimer
 
-### EPIC 12 : Variantes de recettes
+### EPIC 13 : Variantes de recettes
 **Objectif** : Gérer plusieurs variantes d'une même recette de base
 
 #### User Stories
 
-- **US-12.1** : En tant qu'utilisateur, je veux créer une variante d'une recette existante
+- **US-13.1** : En tant qu'utilisateur, je veux créer une variante d'une recette existante
   - Critères d'acceptation :
     - Action "Créer une variante"
     - Copie de la recette de base
     - Lien maintenu avec la recette originale
 
-- **US-12.2** : En tant qu'utilisateur, je veux voir toutes les variantes d'une recette
+- **US-13.2** : En tant qu'utilisateur, je veux voir toutes les variantes d'une recette
   - Critères d'acceptation :
     - Section "Variantes" dans la vue recette
     - Liste des variantes avec leurs différences principales
     - Navigation entre variantes
 
-- **US-12.3** : En tant qu'utilisateur, je veux comparer deux variantes d'une recette
+- **US-13.3** : En tant qu'utilisateur, je veux comparer deux variantes d'une recette
   - Critères d'acceptation :
     - Vue côte à côte ou diff
     - Mise en évidence des différences
@@ -298,15 +338,16 @@
 
 ### Infrastructure
 
-- **TECH-1** : Intégration Firebase AI Logic (Gemini)
-- **TECH-2** : Configuration GitHub OAuth pour stockage
-- **TECH-3** : Implémentation du parser/formatter Markdown
-- **TECH-4** : Système de routing (pages)
+- **TECH-1** ✅ : Intégration Firebase AI Logic (Gemini)
+- **TECH-2** : Configuration GitHub OAuth pour stockage recettes
+- **TECH-3** : Implémentation du formatter Markdown (recette → `.md` pour GitHub)
+- **TECH-4** ✅ : Système de routing (SvelteKit)
 - **TECH-5** : PWA configuration (manifest, service worker)
+- **TECH-10** : Intégration Firestore pour la persistance des conversations
 
 ### Architecture
 
-- **TECH-6** : Mise en place des adapters de stockage (localStorage puis GitHub)
-- **TECH-7** : Abstraction LLM service
-- **TECH-8** : Modèle de données Recipe TypeScript
-- **TECH-9** : Modèle de données Conversation TypeScript
+- **TECH-6** : Mise en place des adapters de stockage (GitHub pour recettes, Firestore pour conversations)
+- **TECH-7** ✅ : Abstraction LLM service (`ILLMService` + `FirebaseGeminiAdapter`)
+- **TECH-8** ✅ : Modèle de données Recipe TypeScript
+- **TECH-9** : Modèle de données Conversation TypeScript (type `Message` défini, modèle `Conversation` à compléter)

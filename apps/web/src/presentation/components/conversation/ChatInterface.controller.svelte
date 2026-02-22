@@ -2,6 +2,7 @@
   import type { Message, MessageContent } from '$core/services/LLMService'
   import { getLLMService } from '$infrastructure/config'
   import { parseMessageContents } from '$core/utils/recipeParser'
+  import { getNewChatPrompt } from '$core/prompts/newChat'
   import MessageComponent from './Message.ui.svelte'
   import MessageInput from './MessageInput.ui.svelte'
   import RecipeLoader from '$presentation/components/recipe/RecipeLoader.ui.svelte'
@@ -56,7 +57,7 @@
             textAfterRecipe = streamingContent.substring(endIndex).trim()
           }
         }
-      })
+      }, getNewChatPrompt())
 
       isGeneratingRecipe = false
 
