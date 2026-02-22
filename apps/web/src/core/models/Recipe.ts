@@ -44,22 +44,3 @@ export interface Recipe {
   steps: string[]
   notes?: string[]
 }
-
-/**
- * Parse markdown recipe content into structured Recipe
- * @param markdown - Markdown content with YAML frontmatter
- * @returns Parsed recipe structure
- */
-export const parseRecipe = (markdown: string): Recipe => {
-  // TODO: Implement full YAML frontmatter + markdown parsing
-  // For now, return a simple structure
-  return {
-    metadata: {
-      title: 'Recipe',
-      servings: 4
-    },
-    ingredients: [],
-    steps: [],
-    notes: []
-  }
-}

@@ -1,3 +1,5 @@
+export * from './base64.js'
+export * from './string.js'
 export * from './markdown.js'
 export * from './diff.js'
 export * from './date.js'

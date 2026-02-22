@@ -1,21 +1,6 @@
 import type { SavedRecipe } from '$core/models/Recipe'
 
 /**
- * Convert a recipe title into a URL-safe slug
- * @param title - Recipe title, e.g. "Risotto Champignons"
- * @returns Slug, e.g. "risotto-champignons"
- */
-export const slugify = (title: string): string => {
-  return title
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-}
-
-/**
  * Format a SavedRecipe object into the markdown file format used in cook-data
  * @param recipe - Saved recipe with id, createdAt, updatedAt present
  * @returns Full markdown string ready to write to GitHub

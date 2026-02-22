@@ -5,6 +5,8 @@
   "main": "./index.ts",
   "exports": {
     ".": "./index.ts",
+    "./base64": "./base64.ts",
+    "./string": "./string.ts",
     "./markdown": "./markdown.ts",
     "./diff": "./diff.ts",
     "./date": "./date.ts"
