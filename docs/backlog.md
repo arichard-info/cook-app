@@ -334,6 +334,15 @@ users/{userId}/conversations/{conversationId}
 
 ---
 
+## Bugfix
+
+- **BUG-1** : UX sauvegarde recette — polish à finaliser
+  - Le bouton "Enregistrer" / loader / "Enregistrée" n'a pas de taille fixe entre ses états (provoque un layout shift)
+  - Le lien "Voir la recette →" a un soulignement à supprimer (`text-decoration: none`)
+  - Le toast de confirmation/erreur n'est pas visible (à investiguer — potentiellement masqué par le `z-index` ou le layout). Revoir la stratégie : prévoir un système centralisé de toast (Svelte store ou méthode attachée à `window`) pour le rendre indépendant du composant parent
+
+---
+
 ## Backlog technique
 
 ### Infrastructure
