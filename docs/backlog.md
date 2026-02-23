@@ -61,27 +61,27 @@
 
 #### User Stories
 
-- **US-3.1** : En tant qu'utilisateur, je veux sauvegarder une recette générée pour la retrouver plus tard
+- **US-3.1** ✅ : En tant qu'utilisateur, je veux sauvegarder une recette générée pour la retrouver plus tard
   - Critères d'acceptation :
     - Bouton "Sauvegarder" sur une recette générée
     - La recette est commitée sur GitHub (repo `cook-data`)
     - Confirmation visuelle de la sauvegarde
     - Génération d'un ID unique pour la recette
 
-- **US-3.2** : En tant qu'utilisateur, je veux lister toutes mes recettes sauvegardées
+- **US-3.2** ✅ : En tant qu'utilisateur, je veux lister toutes mes recettes sauvegardées
   - Critères d'acceptation :
     - Page/vue dédiée au listing des recettes
     - Affichage des recettes sous forme de cards
     - Informations visibles : titre, tags, date de création
     - Accès rapide à chaque recette
 
-- **US-3.3** : En tant qu'utilisateur, je veux consulter une recette sauvegardée
+- **US-3.3** ✅ : En tant qu'utilisateur, je veux consulter une recette sauvegardée
   - Critères d'acceptation :
     - Vue détaillée de la recette
     - Affichage de tous les champs (ingrédients, étapes, notes, métadonnées)
     - Navigation retour vers le listing
 
-- **US-3.4** : En tant qu'utilisateur, je veux supprimer une recette
+- **US-3.4** ✅ : En tant qu'utilisateur, je veux supprimer une recette
   - Critères d'acceptation :
     - Action de suppression disponible
     - Confirmation avant suppression
@@ -336,10 +336,15 @@ users/{userId}/conversations/{conversationId}
 
 ## Bugfix
 
-- **BUG-1** : UX sauvegarde recette — polish à finaliser
-  - Le bouton "Enregistrer" / loader / "Enregistrée" n'a pas de taille fixe entre ses états (provoque un layout shift)
-  - Le lien "Voir la recette →" a un soulignement à supprimer (`text-decoration: none`)
-  - Le toast de confirmation/erreur n'est pas visible (à investiguer — potentiellement masqué par le `z-index` ou le layout). Revoir la stratégie : prévoir un système centralisé de toast (Svelte store ou méthode attachée à `window`) pour le rendre indépendant du composant parent
+- **BUG-2** ✅ : UX chat — feedback visuel pendant l'attente de réponse LLM
+  - ✅ Message user grisé + animation `pending-pulse` tant que le premier chunk n'est pas reçu (`isPending` state)
+  - ✅ `TypingIndicator` (3 points animés) affiché côté assistant pendant la phase d'attente
+  - ✅ Fix race condition auth dans `/recipes` : `await authService?.initialize()` avant `getUser()`
+
+- **BUG-1** ✅ : UX sauvegarde recette — polish
+  - ✅ `min-width: 13rem` sur le bouton primary pour éviter le layout shift entre les états
+  - ✅ `text-decoration: none` sur `.action-button`
+  - ✅ Toast centralisé via Svelte store (`presentation/stores/toast.ts`) + `ToastManager.ui.svelte` monté dans le layout — indépendant de toute hiérarchie de composant
 
 ---
 

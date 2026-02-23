@@ -223,12 +223,17 @@
     font-weight: var(--font-weight-bold);
     text-transform: uppercase;
     border: 2px solid transparent;
+    text-decoration: none;
     transition: all var(--transition-fast);
   }
 
   .action-button.primary {
     background: var(--color-interactive-default);
     color: var(--color-text-inverted);
+    min-width: 13rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .action-button.primary:hover {

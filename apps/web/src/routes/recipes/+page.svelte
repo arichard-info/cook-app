@@ -13,6 +13,7 @@
   const authService = getAuthService()
 
   onMount(async () => {
+    await authService?.initialize()
     const user = authService?.getUser()
     if (!user) {
       isAuthenticated = false

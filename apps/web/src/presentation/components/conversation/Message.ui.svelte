@@ -10,11 +10,12 @@
     role: 'user' | 'assistant'
     contents: MessageContent[]
     isStreaming?: boolean
+    isPending?: boolean
     onSaveRecipe?: (recipe: Recipe, key: string) => void
     recipeStates?: Record<string, SaveStateEntry>
   }
 
-  let { role, contents, isStreaming = false, onSaveRecipe, recipeStates = {} }: Props = $props()
+  let { role, contents, isStreaming = false, isPending = false, onSaveRecipe, recipeStates = {} }: Props = $props()
 
   const renderMarkdown = (text: string): string => {
     return marked.parse(text, { async: false, breaks: true }) as string
@@ -29,7 +30,7 @@
   }
 </script>
 
-<div class="message message-{role}" class:streaming={isStreaming}>
+<div class="message message-{role}" class:streaming={isStreaming} class:pending={isPending}>
   <div class="message-contents">
     {#each contents as content}
       {#if content.type === 'text'}
@@ -122,6 +123,15 @@
 
   .message.streaming .message-content {
     opacity: var(--opacity-streaming);
+  }
+
+  .message-user.pending .message-content {
+    animation: pending-pulse 1.4s ease-in-out infinite;
+  }
+
+  @keyframes pending-pulse {
+    0%, 100% { background: var(--color-surface-user); opacity: 0.55; }
+    50% { background: #3a3a3a; opacity: 0.75; }
   }
 
   .message-contents {
