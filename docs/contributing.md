@@ -40,6 +40,12 @@
 - `[Component].ui.svelte` - Pure UI components
   - Props-driven, minimal internal state
   - Can only import other UI components
+- `[Component].composable.svelte.ts` - Extracted logic for a controller
+  - When a `.controller.svelte` grows too large, extract its state and actions here
+  - Uses Svelte 5 runes (`$state`, `$derived`) — requires `.svelte.ts` extension
+  - Exposes state via getters, actions as plain functions
+  - Named with a factory function: `export const create[Component] = () => { ... }`
+  - The controller imports it and calls the factory: `const chat = createChatSession()`
 
 ### State Management (Svelte 5 Runes)
 

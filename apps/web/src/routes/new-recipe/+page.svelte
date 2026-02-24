@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ChatInterface from '$presentation/components/conversation/ChatInterface.controller.svelte'
+  import ChatInterface from '$presentation/components/conversation/ChatInterface/ChatInterface.controller.svelte'
 </script>
 
 <a href="/recipes" class="back-btn">← Mes recettes</a>
