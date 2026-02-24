@@ -26,6 +26,77 @@
     - Distinction visuelle entre mes messages et ceux du LLM
     - Scroll automatique vers le dernier message
 
+- **US-1.4** ✅ : En tant qu'utilisateur, je veux répondre à des questions de clarification sous forme de QCM interactif, plutôt que de formuler mes réponses manuellement
+
+  **Contexte** : Le LLM pose souvent plusieurs questions groupées pour affiner la recette. Plutôt que d'obliger l'utilisateur à formuler ses réponses en texte libre, on lui propose un QCM interactif intégré à la barre de saisie.
+
+  **Format LLM** — quand le LLM veut poser un QCM, il renvoie :
+  1. Une courte phrase d'intro (ex. "Quelques précisions pour affiner la recette :"), puis
+  2. Un bloc JSON entre marqueurs `<<<QUIZ_START>>>` / `<<<QUIZ_END>>>` — et rien d'autre
+
+  Structure du JSON :
+  ```json
+  {
+    "questions": [
+      {
+        "id": "pesto",
+        "text": "Le pesto : maison ou pot du commerce ?",
+        "type": "single",
+        "options": [
+          { "id": "mortar", "label": "Maison au mortier" },
+          { "id": "mixer", "label": "Maison au mixeur" },
+          { "id": "jar", "label": "Sublimer un pot prêt" }
+        ],
+        "allowOther": true
+      }
+    ]
+  }
+  ```
+  - `type`: `"single"` (radio) ou `"multiple"` (checkbox)
+  - `allowOther`: si `true`, afficher un champ libre "Autre…" en dernière option
+
+  **Comportement LLM (prompt système)** :
+  - Le LLM est instruit d'utiliser ce format lorsqu'il a besoin de précisions avant de générer la recette
+  - Il ne renvoie que l'intro + le bloc quiz — pas de texte supplémentaire après `<<<QUIZ_END>>>`
+
+  **Streaming** :
+  - Pendant la réception des chunks, le texte d'intro s'affiche progressivement (comportement normal)
+  - Dès que `<<<QUIZ_START>>>` est détecté, on passe en mode `isGeneratingQuiz`
+  - Pendant ce mode, un loader discret (ex. `RecipeLoader` adapté ou simple spinner) est affiché à la place de la barre de saisie
+  - Quand `<<<QUIZ_END>>>` est reçu, le JSON est parsé et le quiz s'affiche
+
+  **Affichage du quiz** :
+  - Le texte d'intro du LLM s'affiche normalement dans la bulle assistant (read-only)
+  - Le quiz remplace / enrichit la barre de saisie en bas : les questions s'affichent au-dessus du champ texte habituel, avec radio buttons ou checkboxes stylisés selon les guidelines de l'app
+  - La barre de saisie texte reste disponible en dessous (message libre)
+  - Un seul bouton submit commun
+
+  **Interactions** :
+  - Si l'utilisateur répond au QCM et soumet : un message user apparaît dans le thread avec les choix formatés (ex. "Le pesto : Maison au mortier · La tradition : Version classique"), le quiz disparaît, et la conversation continue normalement
+  - Si l'utilisateur tape du texte libre et soumet sans toucher au QCM : le quiz disparaît, le message libre est envoyé
+  - Dans les deux cas, après soumission, la zone input reprend son état normal
+
+  **Prompt de réponse généré** (côté app, invisible à l'utilisateur) :
+  - Les réponses au QCM sont reformatées en prompt structuré avant envoi au LLM :
+    ```
+    Voici mes préférences :
+    - Le pesto : Maison au mortier
+    - La tradition : Version classique italienne
+    - Les pâtes : [champ libre saisi]
+    ```
+  - Ce prompt est aussi affiché tel quel dans le thread comme message user
+
+  **Fallback** :
+  - Si le JSON entre marqueurs est mal formé, on ignore le quiz et on affiche le contenu brut comme texte normal
+
+  Critères d'acceptation résumés :
+  - Le LLM sort `<<<QUIZ_START>>>...<<<QUIZ_END>>>` avec la structure JSON attendue lorsqu'il doit clarifier
+  - Le quiz s'affiche dans la zone input après réception complète
+  - Radio / checkbox stylisés, champ "Autre" optionnel
+  - Soumission QCM → message user formaté + fermeture quiz
+  - Saisie texte libre → fermeture quiz + envoi message
+  - Fallback gracieux si JSON invalide
+
 ### EPIC 2 : Génération de recette formatée ✅
 **Objectif** : Le LLM peut formaliser la conversation en une recette structurée
 

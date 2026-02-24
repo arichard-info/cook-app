@@ -9,25 +9,35 @@ import type { MessageContent } from '$core/services/LLMService'
 export const parseMessageContents = (streamContent: string): MessageContent[] => {
   const contents: MessageContent[] = []
 
+  // Strip any quiz block before processing — the quiz is ephemeral and handled separately
+  const QUIZ_START = '<<<QUIZ_START>>>'
+  const QUIZ_END = '<<<QUIZ_END>>>'
+  let cleanContent = streamContent
+  if (cleanContent.includes(QUIZ_START) && cleanContent.includes(QUIZ_END)) {
+    const qs = cleanContent.indexOf(QUIZ_START)
+    const qe = cleanContent.indexOf(QUIZ_END) + QUIZ_END.length
+    cleanContent = (cleanContent.substring(0, qs) + cleanContent.substring(qe)).trim()
+  }
+
   const startMarker = '<<<RECIPE_START>>>'
   const endMarker = '<<<RECIPE_END>>>'
 
-  if (!streamContent.includes(startMarker) || !streamContent.includes(endMarker)) {
+  if (!cleanContent.includes(startMarker) || !cleanContent.includes(endMarker)) {
     // No recipe, just text
-    return [{ type: 'text', content: streamContent.trim() }]
+    return [{ type: 'text', content: cleanContent.trim() }]
   }
 
-  const startIndex = streamContent.indexOf(startMarker)
-  const endIndex = streamContent.indexOf(endMarker) + endMarker.length
+  const startIndex = cleanContent.indexOf(startMarker)
+  const endIndex = cleanContent.indexOf(endMarker) + endMarker.length
 
   // Text before
-  const textBefore = streamContent.substring(0, startIndex).trim()
+  const textBefore = cleanContent.substring(0, startIndex).trim()
   if (textBefore) {
     contents.push({ type: 'text', content: textBefore })
   }
 
   // Recipe
-  const recipeJson = streamContent.substring(
+  const recipeJson = cleanContent.substring(
     startIndex + startMarker.length,
     endIndex - endMarker.length
   ).trim()
@@ -41,7 +51,7 @@ export const parseMessageContents = (streamContent: string): MessageContent[] =>
   }
 
   // Text after
-  const textAfter = streamContent.substring(endIndex).trim()
+  const textAfter = cleanContent.substring(endIndex).trim()
   if (textAfter) {
     contents.push({ type: 'text', content: textAfter })
   }
