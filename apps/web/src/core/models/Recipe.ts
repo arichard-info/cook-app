@@ -14,6 +14,12 @@ export interface RecipeMetadata {
   createdAt?: string
   /** ISO date string YYYY-MM-DD */
   updatedAt?: string
+  /**
+   * Whether the recipe supports dynamic quantity scaling.
+   * true (or absent) = portion-based, scaler shown.
+   * false = whole recipe (tart, cake, bread...), no scaler.
+   */
+  scalable?: boolean
 }
 
 /**

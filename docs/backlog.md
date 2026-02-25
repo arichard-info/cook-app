@@ -403,6 +403,40 @@ users/{userId}/conversations/{conversationId}
     - Mise en évidence des différences
     - Possibilité de fusionner des éléments
 
+### EPIC 14 : Quantités et portions ajustables
+**Objectif** : Permettre à l'utilisateur d'ajuster dynamiquement les quantités d'une recette selon le nombre de personnes souhaité.
+
+**Principe technique** :
+- Les quantités scalables sont encodées en HTML inline dans le markdown : `<span data-qty="{valeur}" data-unit="{unité}">texte affiché</span>`
+- Format agnostique : rendu identique dans tous les renderers markdown (GitHub, Obsidian...) — les data-attributes sont invisibles, seul le texte s'affiche
+- Le flag `scalable` dans le frontmatter YAML détermine si le sélecteur est affiché
+- Le scaling est purement une feature de présentation : le fichier `.md` stocké n'est jamais modifié
+
+**Convention `scalable`** :
+- `scalable: true` (ou absent) → recette en portions, sélecteur affiché
+- `scalable: false` → recette entière non divisible (tarte, gâteau, pain...), pas de sélecteur
+
+#### User Stories
+
+- **US-14.1** ✅ : En tant qu'utilisateur, je veux voir un sélecteur de portions sur une fiche recette pour ajuster les quantités à la volée
+  - ✅ `ServingsStepper.ui.svelte` — stepper `+/-` réutilisable (bind:value)
+  - ✅ `RecipeBody.ui.svelte` — rendu partagé ingrédients/étapes/notes avec `scaleHtml`
+  - ✅ Stepper affiché dans `RecipeCard` (thread chat) et dans la page recette
+  - ✅ Quantités non-wrappées inchangées, arrondi intelligent pour `data-unit="count"`
+  - ✅ Pas de sélecteur si `scalable: false` ou aucun span détecté
+
+- **US-14.2** ✅ : En tant qu'utilisateur, je veux que les recettes générées par le LLM contiennent les métadonnées de scaling
+  - ✅ Fragment `quantity-convention.ts` composé dans le prompt système
+  - ✅ Champ `scalable` ajouté au modèle `RecipeMetadata` et au schéma JSON du prompt
+  - ✅ Exemples de spans dans le template RECIPE_START/END
+  - ✅ Fragment `quiz-convention.ts` extrait (refactor prompt composition)
+
+- **US-14.3** : En tant qu'utilisateur, je veux pouvoir modifier une quantité dans l'éditeur sans manipuler le HTML
+  - Critères d'acceptation :
+    - En mode édition, les spans `data-qty` s'affichent comme des "quantity chips" interactifs
+    - Tapper un chip ouvre un micro-éditeur (valeur numérique + sélecteur d'unité)
+    - La modification met à jour le span HTML sous-jacent de façon transparente
+
 ---
 
 ## Bugfix

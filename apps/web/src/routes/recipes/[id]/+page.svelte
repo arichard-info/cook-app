@@ -5,10 +5,26 @@
   import { getAuthService } from '$infrastructure/auth'
   import { getRecipeService } from '$infrastructure/storage'
   import type { SavedRecipe } from '$core/models/Recipe'
+  import { hasScalableQuantities } from '$core/utils/quantityScaler'
+  import RecipeBody from '$presentation/components/recipe/RecipeBody.ui.svelte'
+  import ServingsStepper from '$presentation/components/recipe/ServingsStepper.ui.svelte'
 
   let recipe = $state<SavedRecipe | null>(null)
   let isLoading = $state(true)
   let error = $state<string | null>(null)
+  let selectedServings = $state(0)
+
+  const baseServings = $derived(recipe?.metadata.servings ?? 4)
+  const scale = $derived(selectedServings > 0 ? selectedServings / baseServings : 1)
+  const isScalable = $derived(
+    recipe != null &&
+      recipe.metadata.scalable !== false &&
+      hasScalableQuantities([
+        ...recipe.ingredients.flatMap((g) => g.items),
+        ...recipe.steps,
+        ...(recipe.notes ?? []),
+      ]),
+  )
 
   const authService = getAuthService()
   const id = $page.params.id
@@ -26,7 +42,8 @@
       const recipeService = getRecipeService()
       if (!recipeService) throw new Error('Recipe service unavailable')
       recipe = await recipeService.get(id, user.username)
-      if (!recipe) error = 'Recette introuvable.'
+      if (recipe) selectedServings = recipe.metadata.servings ?? 4
+      else error = 'Recette introuvable.'
     } catch {
       error = 'Impossible de charger la recette.'
     } finally {
@@ -63,7 +80,11 @@
       <h1>{recipe.metadata.title}</h1>
       <div class="recipe-meta">
         {#if recipe.metadata.servings}
-          <span class="meta-item">Pour {recipe.metadata.servings} personnes</span>
+          {#if isScalable}
+            <ServingsStepper bind:value={selectedServings} />
+          {:else}
+            <span class="meta-item">Pour {recipe.metadata.servings} personnes</span>
+          {/if}
         {/if}
         {#if recipe.metadata.totalTime}
           <span class="meta-item">{recipe.metadata.totalTime}</span>
@@ -88,42 +109,12 @@
       {/if}
     </header>
 
-    <section class="recipe-section">
-      <h2>Ingrédients</h2>
-      {#each recipe.ingredients as group}
-        {#if group.name}
-          <h3 class="group-name">{group.name}</h3>
-        {/if}
-        <ul>
-          {#each group.items as item}
-            <li>{item}</li>
-          {/each}
-        </ul>
-      {/each}
-    </section>
-
-    <section class="recipe-section">
-      <h2>Étapes</h2>
-      <ol class="steps">
-        {#each recipe.steps as step, index}
-          <li>
-            <span class="step-number">{index + 1}</span>
-            <span class="step-content">{step}</span>
-          </li>
-        {/each}
-      </ol>
-    </section>
-
-    {#if recipe.notes && recipe.notes.length > 0}
-      <section class="recipe-section">
-        <h2>Notes & Tips</h2>
-        <ul>
-          {#each recipe.notes as note}
-            <li>{note}</li>
-          {/each}
-        </ul>
-      </section>
-    {/if}
+    <RecipeBody
+      ingredients={recipe.ingredients}
+      steps={recipe.steps}
+      notes={recipe.notes}
+      {scale}
+    />
 
     <footer class="recipe-footer">
       <button class="delete-btn" onclick={handleDelete}>Supprimer la recette</button>
@@ -176,6 +167,7 @@
     flex-wrap: wrap;
     gap: var(--spacing-lg);
     margin-bottom: var(--spacing-sm);
+    align-items: center;
   }
 
   .meta-item {
@@ -200,74 +192,6 @@
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-bold);
     text-transform: uppercase;
-  }
-
-  .recipe-section {
-    margin-bottom: var(--spacing-2xl);
-  }
-
-  .recipe-section h2 {
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-bold);
-    text-transform: uppercase;
-    margin-bottom: var(--spacing-md);
-  }
-
-  .group-name {
-    font-size: var(--font-size-base);
-    font-weight: var(--font-weight-bold);
-    margin: var(--spacing-md) 0 var(--spacing-sm) 0;
-  }
-
-  .recipe-section ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .recipe-section ul li {
-    padding: var(--spacing-xs) 0;
-    padding-left: var(--spacing-lg);
-    position: relative;
-  }
-
-  .recipe-section ul li::before {
-    content: '•';
-    position: absolute;
-    left: 0;
-    font-weight: var(--font-weight-bold);
-  }
-
-  .steps {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .steps li {
-    display: flex;
-    gap: var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
-  }
-
-  .step-number {
-    flex-shrink: 0;
-    width: 32px;
-    height: 32px;
-    background: var(--color-interactive-default);
-    color: var(--color-text-inverted);
-    border-radius: var(--radius-full);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: var(--font-weight-bold);
-    font-size: var(--font-size-sm);
-  }
-
-  .step-content {
-    flex: 1;
-    line-height: var(--line-height-tight);
-    padding-top: var(--spacing-xs);
   }
 
   .recipe-footer {
