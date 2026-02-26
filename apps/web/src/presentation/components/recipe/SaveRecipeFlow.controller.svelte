@@ -47,7 +47,6 @@
     }
   }
 
-  // Trigger save immediately on mount
   $effect(() => {
     handleSave()
   })

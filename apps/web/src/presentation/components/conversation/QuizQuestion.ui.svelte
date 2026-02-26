@@ -11,7 +11,6 @@
 
   const toggleOption = (optionId: string) => {
     if (question.type === 'single') {
-      // Radio: clear other text too
       onAnswerChange({ ...answer, selectedOptionIds: [optionId], otherText: undefined })
     } else {
       const already = answer.selectedOptionIds.includes(optionId)
@@ -24,10 +23,8 @@
 
   const toggleOther = () => {
     if (answer.otherText !== undefined) {
-      // Uncheck "Autre"
       onAnswerChange({ ...answer, otherText: undefined })
     } else {
-      // Check "Autre": for single, clear other selections
       if (question.type === 'single') {
         onAnswerChange({ ...answer, selectedOptionIds: [], otherText: '' })
       } else {

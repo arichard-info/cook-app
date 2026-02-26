@@ -6,8 +6,6 @@ const REPO_KEY = 'cook_github_repo'
 const ENC_KEY_KEY = 'cook_enc_key'
 const GITHUB_USER_URL = 'https://api.github.com/user'
 
-// --- Crypto helpers (AES-GCM, 256-bit key) ---
-
 const getOrCreateEncKey = async (): Promise<CryptoKey> => {
   const stored = localStorage.getItem(ENC_KEY_KEY)
   if (stored) {
@@ -48,8 +46,6 @@ const decryptToken = async (ciphertext: string): Promise<string> => {
   return new TextDecoder().decode(decrypted)
 }
 
-// --- Adapter ---
-
 /**
  * GitHub authentication adapter using Personal Access Token (PAT)
  * The token is encrypted with AES-GCM before being stored in localStorage.
@@ -72,7 +68,6 @@ export class GitHubPATAdapter implements IAuthService {
       const token = await decryptToken(encrypted)
       this.user = { token, username, repoName }
     } catch {
-      // Corrupted data — clear it
       this.signOut()
     }
   }

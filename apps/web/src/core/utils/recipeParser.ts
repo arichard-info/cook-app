@@ -23,34 +23,29 @@ export const parseMessageContents = (streamContent: string): MessageContent[] =>
   const endMarker = '<<<RECIPE_END>>>'
 
   if (!cleanContent.includes(startMarker) || !cleanContent.includes(endMarker)) {
-    // No recipe, just text
     return [{ type: 'text', content: cleanContent.trim() }]
   }
 
   const startIndex = cleanContent.indexOf(startMarker)
   const endIndex = cleanContent.indexOf(endMarker) + endMarker.length
 
-  // Text before
   const textBefore = cleanContent.substring(0, startIndex).trim()
   if (textBefore) {
     contents.push({ type: 'text', content: textBefore })
   }
 
-  // Recipe
   const recipeJson = cleanContent.substring(
     startIndex + startMarker.length,
     endIndex - endMarker.length
   ).trim()
 
   try {
-    // Validate JSON
     JSON.parse(recipeJson)
     contents.push({ type: 'recipe', content: recipeJson })
   } catch (error) {
     console.error('Invalid recipe JSON:', error)
   }
 
-  // Text after
   const textAfter = cleanContent.substring(endIndex).trim()
   if (textAfter) {
     contents.push({ type: 'text', content: textAfter })
